@@ -9,10 +9,14 @@ jobs:
   build:
     runs-on: windows-latest
     steps:
+      # Pełny checkout, aby GitVersion widziało całą historię i tagi
       - name: Checkout main branch
         uses: actions/checkout@v4
         with:
           ref: main
+          fetch-depth: 0      # <-- kluczowe dla GitVersion
+          fetch-tags: true
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup .NET 8
         uses: actions/setup-dotnet@v4
@@ -21,37 +25,46 @@ jobs:
 
       - name: Restore dependencies
         run: dotnet restore
+
+      # Setup GitVersion CLI
       - name: Setup GitVersion
         uses: gittools/actions/gitversion/setup@v0.10.0
         with:
-          versionSpec: '5.x'
+          versionSpec: '5.x'   # <-- poprawny syntax
 
       - name: Execute GitVersion
         uses: gittools/actions/gitversion/execute@v0.10.0
         id: gitversion
 
+      # Build z ustawioną wersją z GitVersion
       - name: Build project
         run: dotnet build --configuration Release /p:Version=${{ steps.gitversion.outputs.semVer }}
 
+      # Publish do folderu publish
       - name: Publish project
         run: dotnet publish -c Release -o publish /p:Version=${{ steps.gitversion.outputs.semVer }}
 
+      # ZIP publikacji
       - name: Create ZIP
         run: powershell Compress-Archive -Path publish\* -DestinationPath $env:RUNNER_TEMP\publish.zip -Force
 
+      # Checkout gh-pages z pełnym fetch
       - name: Checkout gh-pages
         uses: actions/checkout@v4
         with:
           ref: gh-pages
+          fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
+      # Kopiowanie publish.zip
       - name: Copy publish.zip to gh-pages
         run: copy $env:RUNNER_TEMP\publish.zip publish.zip
 
+      # Commit i push
       - name: Commit and push publish.zip
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add publish.zip
-          git commit -m "Update publish.zip" || echo "No changes to commit"
+          git commit -m "Update publish.zip to version ${{ steps.gitversion.outputs.semVer }}" || echo "No changes to commit"
           git push
