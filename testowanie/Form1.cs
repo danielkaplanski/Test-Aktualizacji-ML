@@ -51,11 +51,9 @@ namespace testowanie
 
         private void CheckForUpdateRestart()
         {
-            // SprawdŸ czy istnieje plik bat z aktualizacji
             string batFile = Path.Combine(Path.GetTempPath(), "update.bat");
             if (File.Exists(batFile))
             {
-                // Poczekaj chwilê i usuñ plik bat
                 Task.Delay(1000).ContinueWith(t => {
                     try { File.Delete(batFile); } catch { }
                 });
@@ -73,7 +71,7 @@ namespace testowanie
                 var response = await httpClient.GetAsync(url);
                 var stream = await response.Content.ReadAsStreamAsync();
 
-                using (var reader = new StreamReader(stream, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false)))
+                using (var reader = new StreamReader(stream, new UTF8Encoding(false)))
                 {
                     string version = await reader.ReadToEndAsync();
                     return version.Trim().Trim('\uFEFF');
@@ -87,13 +85,13 @@ namespace testowanie
             string tempZipPath = Path.Combine(Path.GetTempPath(), "update.zip");
             string extractPath = Path.Combine(Path.GetTempPath(), "update");
             string currentDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            string exeName = Path.GetFileName(Assembly.GetExecutingAssembly().Location);
 
             try
             {
                 updateBtn.Enabled = false;
                 lblUpdateInfo.Text = "Pobieranie...";
 
-                // Pobierz
                 using (HttpClient client = new HttpClient())
                 {
                     var data = await client.GetByteArrayAsync(url);
@@ -102,7 +100,6 @@ namespace testowanie
 
                 lblUpdateInfo.Text = "Rozpakowywanie...";
 
-                // Rozpakuj
                 if (Directory.Exists(extractPath))
                     Directory.Delete(extractPath, true);
 
@@ -113,23 +110,33 @@ namespace testowanie
                 if (exeFiles.Length == 0)
                 {
                     MessageBox.Show("Brak pliku exe w aktualizacji.");
+                    updateBtn.Enabled = true;
                     return;
                 }
 
                 string newExePath = exeFiles[0];
-                string newExeName = Path.GetFileName(newExePath);
-                string targetExePath = Path.Combine(currentDir, newExeName);
+                string targetExePath = Path.Combine(currentDir, exeName);
+
+                // Tworzymy plik BAT
+                string batFile = Path.Combine(Path.GetTempPath(), "update.bat");
+                string batContent = $@"
+@echo off
+timeout /t 1 /nobreak >nul
+xcopy /Y /E ""{extractPath}\*"" ""{currentDir}\""
+start """" ""{targetExePath}""
+del ""%~f0""
+";
+                await File.WriteAllTextAsync(batFile, batContent, Encoding.Default);
 
                 lblUpdateInfo.Text = "Uruchamianie nowej wersji...";
 
-                // Uruchom now¹ wersjê (bez zastêpowania plików)
-                Process.Start(newExePath);
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = batFile,
+                    WindowStyle = ProcessWindowStyle.Hidden
+                });
 
-                MessageBox.Show("Nowa wersja zosta³a uruchomiona. Mo¿esz zamkn¹æ star¹ wersjê.");
-
-                // Opcjonalnie: zamknij star¹ wersjê
-                // Application.Exit();
-
+                Application.Exit();
             }
             catch (Exception ex)
             {
