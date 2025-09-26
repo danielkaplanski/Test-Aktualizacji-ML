@@ -35,21 +35,30 @@ namespace testowanie
             try
             {
                 remoteVersion = await GetRemoteVersionAsync();
-                lblUpdateInfo.Text = $"Nowa wersja: {remoteVersion}";
 
                 if (remoteVersion != currentVersion)
                 {
-                    lblUpdateInfo.Text += " (Dostêpna nowa wersja!)";
+                    // Nowa wersja dostêpna - poka¿ wszystko
+                    lblUpdateInfo.Text = $"Nowa wersja: {remoteVersion} (Dostêpna nowa wersja!)";
+                    lblUpdateInfo.Visible = true;  // Pokazuj etykietê
                     updateBtn.Enabled = true;
+                    updateBtn.Visible = true;      // Pokazuj przycisk
                 }
                 else
                 {
-                    lblUpdateInfo.Text += " (Aktualna)";
+                    // Wersja aktualna - ukryj przycisk i etykietê z informacj¹ o nowej wersji
+                    lblUpdateInfo.Text = $"Aktualna wersja: {currentVersion}";
+                    // lblUpdateInfo.Visible = true; // Mo¿esz zostawiæ widoczn¹ z innym tekstem
+                    updateBtn.Enabled = false;
+                    updateBtn.Visible = false;     // Ukryj przycisk
                 }
             }
             catch (Exception ex)
             {
                 lblUpdateInfo.Text = $"B³¹d sprawdzania wersji: {ex.Message}";
+                lblUpdateInfo.Visible = true;      // Pokazuj b³¹d
+                updateBtn.Enabled = false;
+                updateBtn.Visible = false;         // Ukryj przycisk przy b³êdzie
             }
         }
 
