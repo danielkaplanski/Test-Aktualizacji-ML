@@ -20,6 +20,11 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
+      - name: Install GitVersion
+        uses: GitTools/actions/setup/gitversion@v0.11.0
+        with:
+          versionSpec: '5.x'
+
       - name: Run GitVersion
         uses: GitTools/actions/gitversion/execute@v0.11.0
         id: gitversion
