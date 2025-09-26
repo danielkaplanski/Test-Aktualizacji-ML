@@ -22,11 +22,15 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore
 
+      - name: Execute GitVersion
+        uses: gittools/actions/gitversion/execute@v0.10.0
+        id: gitversion
+
       - name: Build project
-        run: dotnet build --configuration Release
+        run: dotnet build --configuration Release /p:Version=${{ steps.gitversion.outputs.semVer }}
 
       - name: Publish project
-        run: dotnet publish -c Release -o publish
+        run: dotnet publish -c Release -o publish /p:Version=${{ steps.gitversion.outputs.semVer }}
 
       - name: Create ZIP
         run: powershell Compress-Archive -Path publish\* -DestinationPath $env:RUNNER_TEMP\publish.zip -Force
