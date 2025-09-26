@@ -1,4 +1,4 @@
-name: Generate Version File
+name: Generate and Publish Version File
 
 on:
   push:
@@ -33,20 +33,20 @@ jobs:
       - name: Save version to version.txt
         run: echo "${{ steps.gitversion.outputs.semVer }}" > version.txt
 
-      - name: Commit and push version.txt if changed
+      - name: Checkout gh-pages branch
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Copy version.txt to gh-pages
+        run: |
+          echo "${{ steps.gitversion.outputs.semVer }}" > version.txt
+
+      - name: Commit and push version.txt to gh-pages
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add version.txt
-          if ! git diff --cached --quiet; then
-            git commit -m "Update version.txt [skip ci]"
-            git push
-          else
-            echo "No changes in version.txt"
-          fi
-
-      - name: Upload version.txt as artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: version.txt
-          path: version.txt
+          git commit -m "Update version.txt to ${{ steps.gitversion.outputs.semVer }}" || echo "No changes to commit"
+          git push
