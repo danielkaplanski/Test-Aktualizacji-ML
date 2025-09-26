@@ -22,17 +22,17 @@ namespace testowanie
 
         private async void Form1_Load(object sender, EventArgs e)
         {
-            // 1. Pobierz lokaln¹ wersjê aplikacji
+            // SprawdŸ czy to restart po aktualizacji
+            CheckForUpdateRestart();
+
             currentVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "Brak wersji";
             lblCurrentVersion.Text = $"Wersja: {currentVersion}";
 
-            // 2. Pobierz zdaln¹ wersjê
             try
             {
                 remoteVersion = await GetRemoteVersionAsync();
                 lblUpdateInfo.Text = $"Nowa wersja: {remoteVersion}";
 
-                // 3. Porównaj wersje
                 if (remoteVersion != currentVersion)
                 {
                     lblUpdateInfo.Text += " (Dostêpna nowa wersja!)";
@@ -46,6 +46,22 @@ namespace testowanie
             catch (Exception ex)
             {
                 lblUpdateInfo.Text = $"B³¹d sprawdzania wersji: {ex.Message}";
+            }
+        }
+
+        private void CheckForUpdateRestart()
+        {
+            // SprawdŸ czy istnieje plik bat z aktualizacji
+            string batFile = Path.Combine(Path.GetTempPath(), "update.bat");
+            if (File.Exists(batFile))
+            {
+                // Poczekaj chwilê i usuñ plik bat
+                Task.Delay(1000).ContinueWith(t => {
+                    try { File.Delete(batFile); } catch { }
+                });
+
+                MessageBox.Show("Aktualizacja zakoñczona pomyœlnie! Obecna wersja: " +
+                    Assembly.GetExecutingAssembly().GetName().Version?.ToString());
             }
         }
 
@@ -67,11 +83,17 @@ namespace testowanie
 
         private async void updateBtn_Click(object sender, EventArgs e)
         {
+            if (MessageBox.Show("Czy na pewno chcesz zaktualizowaæ aplikacjê?", "Potwierdzenie",
+                MessageBoxButtons.YesNo) != DialogResult.Yes)
+            {
+                return;
+            }
+
             string url = "https://danielkaplanski.github.io/Test-Aktualizacji-ML/publish.zip";
             string tempZipPath = Path.Combine(Path.GetTempPath(), "update.zip");
             string extractPath = Path.Combine(Path.GetTempPath(), "update");
             string currentDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-            string backupDir = Path.Combine(Path.GetTempPath(), "backup_" + DateTime.Now.ToString("yyyyMMdd_HHmmss"));
+            string currentExe = Path.GetFileName(Assembly.GetExecutingAssembly().Location);
 
             try
             {
@@ -93,86 +115,65 @@ namespace testowanie
 
                 ZipFile.ExtractToDirectory(tempZipPath, extractPath);
 
-                // 3. ZnajdŸ plik wykonywalny w nowej wersji
-                var exeFiles = Directory.GetFiles(extractPath, "*.exe", SearchOption.AllDirectories);
-                if (exeFiles.Length == 0)
+                // 3. SprawdŸ czy s¹ pliki do aktualizacji
+                var newFiles = Directory.GetFiles(extractPath, "*", SearchOption.AllDirectories);
+                if (newFiles.Length == 0)
                 {
-                    MessageBox.Show("Nie znaleziono pliku .exe w paczce aktualizacji.");
+                    MessageBox.Show("Brak plików w paczce aktualizacji.");
                     return;
                 }
 
-                lblUpdateInfo.Text = "Tworzenie kopii zapasowej...";
+                lblUpdateInfo.Text = "Przygotowywanie aktualizacji...";
 
-                // 4. Utwórz kopiê zapasow¹ obecnej wersji
-                if (Directory.Exists(backupDir))
-                    Directory.Delete(backupDir, true);
+                // 4. Stwórz batch file który wykona aktualizacjê po zamkniêciu aplikacji
+                string batPath = Path.Combine(Path.GetTempPath(), "update.bat");
+                string batContent = $@"
+@echo off
+chcp 65001 > nul
+echo Czekam na zamkniêcie aplikacji...
+timeout /t 2 /nobreak > nul
 
-                Directory.CreateDirectory(backupDir);
+echo Kopiowanie nowych plików...
+xcopy /y /s ""{extractPath}"" ""{currentDir}""
 
-                // Skopiuj wszystkie pliki obecnej wersji do backupu
-                foreach (string file in Directory.GetFiles(currentDir))
+echo Uruchamianie nowej wersji...
+cd /d ""{currentDir}""
+start """" ""{currentExe}""
+
+echo Usuwanie plików tymczasowych...
+rd /s /q ""{extractPath}""
+del ""{tempZipPath}""
+del ""%~f0""
+
+exit
+";
+
+                await File.WriteAllTextAsync(batPath, batContent, Encoding.GetEncoding(852));
+
+                // 5. Uruchom batch file
+                Process.Start(new ProcessStartInfo
                 {
-                    string fileName = Path.GetFileName(file);
-                    File.Copy(file, Path.Combine(backupDir, fileName), true);
-                }
+                    FileName = "cmd.exe",
+                    Arguments = $"/C \"{batPath}\"",
+                    WindowStyle = ProcessWindowStyle.Hidden,
+                    CreateNoWindow = true
+                });
 
-                lblUpdateInfo.Text = "Zastêpowanie plików...";
-
-                // 5. Zast¹p pliki now¹ wersj¹
-                foreach (string file in Directory.GetFiles(extractPath, "*", SearchOption.AllDirectories))
-                {
-                    string relativePath = file.Substring(extractPath.Length + 1);
-                    string targetPath = Path.Combine(currentDir, relativePath);
-
-                    string targetDir = Path.GetDirectoryName(targetPath);
-                    if (!Directory.Exists(targetDir))
-                        Directory.CreateDirectory(targetDir);
-
-                    File.Copy(file, targetPath, true);
-                }
-
-                lblUpdateInfo.Text = "Uruchamianie nowej wersji...";
-
-                // 6. Uruchom now¹ wersjê z ORYGINALNEJ lokalizacji
-                string newExePath = Path.Combine(currentDir, Path.GetFileName(exeFiles[0]));
-
-                Process.Start(newExePath);
+                // 6. Zamknij aplikacjê
                 Application.Exit();
+
             }
             catch (Exception ex)
             {
-                MessageBox.Show("B³¹d aktualizacji: " + ex.Message);
-
-                // Przywróæ backup w przypadku b³êdu
-                try
-                {
-                    if (Directory.Exists(backupDir))
-                    {
-                        foreach (string file in Directory.GetFiles(backupDir))
-                        {
-                            string fileName = Path.GetFileName(file);
-                            string targetPath = Path.Combine(currentDir, fileName);
-                            File.Copy(file, targetPath, true);
-                        }
-                    }
-                }
-                catch (Exception restoreEx)
-                {
-                    MessageBox.Show("B³¹d przywracania kopii zapasowej: " + restoreEx.Message);
-                }
-
+                MessageBox.Show($"B³¹d aktualizacji: {ex.Message}");
                 updateBtn.Enabled = true;
                 lblUpdateInfo.Text = "B³¹d aktualizacji";
-            }
-            finally
-            {
-                // Sprz¹tanie
+
+                // Sprz¹tanie w przypadku b³êdu
                 try
                 {
-                    if (File.Exists(tempZipPath))
-                        File.Delete(tempZipPath);
-                    if (Directory.Exists(extractPath))
-                        Directory.Delete(extractPath, true);
+                    if (File.Exists(tempZipPath)) File.Delete(tempZipPath);
+                    if (Directory.Exists(extractPath)) Directory.Delete(extractPath, true);
                 }
                 catch { }
             }
