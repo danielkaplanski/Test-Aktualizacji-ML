@@ -31,8 +31,11 @@ jobs:
       - name: Check if GitVersion is installed
         run: |
           export PATH="$PATH:$HOME/.dotnet/tools"
-          which gitversion
-          gitversion --version
+          echo "PATH: $PATH"
+          echo "Checking gitversion location..."
+          which gitversion || echo "❌ gitversion not found"
+          echo "Checking gitversion version..."
+          gitversion --version || echo "❌ gitversion command failed"
 
       - name: Generate version.txt
         run: |
