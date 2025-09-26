@@ -1,4 +1,4 @@
-name: Generate and Update version.txt
+name: Update Version on Netlify
 
 on:
   push:
@@ -6,11 +6,12 @@ on:
       - main
 
 jobs:
-  update-version:
+  build:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - name: Checkout main repo
+      uses: actions/checkout@v3
 
     - name: Install GitVersion
       run: dotnet tool install --global GitVersion.Tool
@@ -18,12 +19,26 @@ jobs:
     - name: Generate version.txt
       run: |
         export PATH="$PATH:$HOME/.dotnet/tools"
-        dotnet tool run gitversion /showvariable SemVer > version.txt
+        gitversion /showvariable SemVer > version.txt
 
+    - name: Checkout Netlify repo
+      uses: actions/checkout@v3
+      with:
+        repository: https://majestic-axolotl-224ec3.netlify.app  # podmień na repo Netlify
+        path: netlify-site
 
-    - name: Commit and push version.txt if changed
+    - name: Copy version.txt to Netlify repo
       run: |
+        cp version.txt netlify-site/version.txt
+
+    - name: Commit and push changes to Netlify repo
+      run: |
+        cd netlify-site
         git config user.name "github-actions"
         git config user.email "actions@github.com"
         git add version.txt
-        git diff --cached --quiet || (git commit -m "Update version.txt to $(cat version.txt)" && git push)
+        git commit -m "Update version.txt to $(cat ../version.txt)" || echo "No changes to commit"
+        git push origin main
+      env:
+        # Token z uprawnieniami do push do repo Netlify
+        GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
