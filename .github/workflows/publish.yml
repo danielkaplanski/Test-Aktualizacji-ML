@@ -21,9 +21,16 @@ jobs:
 
       - name: Restore dependencies
         run: dotnet restore
+
+      - name: Run GitVersion
+        uses: gittools/actions/gitversion/setup@v0.10.0
+        with:
+          versionSpec: '5.x'
+          
       - name: Execute GitVersion
         uses: gittools/actions/gitversion/execute@v0.10.0
         id: gitversion
+
 
       - name: Update version in csproj
         run: |
