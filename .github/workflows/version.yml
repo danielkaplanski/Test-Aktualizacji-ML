@@ -18,7 +18,8 @@ jobs:
     - name: Generate version.txt
       run: |
         export PATH="$PATH:$HOME/.dotnet/tools"
-        gitversion /showvariable SemVer > version.txt
+        dotnet tool run gitversion /showvariable SemVer > version.txt
+
 
     - name: Commit and push version.txt if changed
       run: |
