@@ -24,8 +24,10 @@ jobs:
           dotnet tool list --global
       - name: Install GitVersion
         run: |
-          dotnet tool install --global GitVersion.Tool || { echo "❌ Instalacja GitVersion się nie powiodła"; exit 1; }
+          dotnet --info
+          dotnet tool install --global GitVersion.Tool || { echo "❌ GitVersion install failed"; exit 1; }
           echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
+          dotnet tool list --global
 
 
       - name: Check if GitVersion is installed
