@@ -29,7 +29,7 @@ namespace testowanie
 
             // Podziel wersjê na czêœci u¿ywaj¹c '+' jako separatora i weŸ tylko pierwsz¹ czêœæ
             string displayVersion = version.Split('+')[0];
-
+            currentVersion = displayVersion;
             lblCurrentVersion.Text = $"Wersja: {displayVersion}";
 
             try
