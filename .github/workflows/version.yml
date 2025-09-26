@@ -10,24 +10,30 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
           fetch-tags: true
 
       - name: Setup .NET 8 SDK
-        uses: actions/setup-dotnet@v3
+        uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
 
       - name: Install GitVersion
-        uses: GitTools/actions/setup/gitversion@v0.11.0
-        with:
-          versionSpec: '5.x'
+        run: |
+          dotnet tool install --global GitVersion.Tool --version 5.12.0
+          echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
 
       - name: Run GitVersion
-        uses: GitTools/actions/gitversion/execute@v0.11.0
         id: gitversion
+        run: |
+          dotnet-gitversion /output json /output buildserver > gitversion.json
+          echo "semver=$(jq -r '.SemVer' gitversion.json)" >> $GITHUB_OUTPUT
+          echo "major=$(jq -r '.Major' gitversion.json)" >> $GITHUB_OUTPUT
+          echo "minor=$(jq -r '.Minor' gitversion.json)" >> $GITHUB_OUTPUT
+          echo "patch=$(jq -r '.Patch' gitversion.json)" >> $GITHUB_OUTPUT
+          echo "assemblySemVer=$(jq -r '.AssemblySemVer' gitversion.json)" >> $GITHUB_OUTPUT
 
       - name: Save version to version.txt
         run: echo "${{ steps.gitversion.outputs.semver }}" > version.txt
