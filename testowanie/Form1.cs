@@ -83,24 +83,17 @@ namespace testowanie
 
         private async void updateBtn_Click(object sender, EventArgs e)
         {
-            if (MessageBox.Show("Czy na pewno chcesz zaktualizowaæ aplikacjê?", "Potwierdzenie",
-                MessageBoxButtons.YesNo) != DialogResult.Yes)
-            {
-                return;
-            }
-
             string url = "https://danielkaplanski.github.io/Test-Aktualizacji-ML/publish.zip";
             string tempZipPath = Path.Combine(Path.GetTempPath(), "update.zip");
             string extractPath = Path.Combine(Path.GetTempPath(), "update");
             string currentDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-            string currentExe = Path.GetFileName(Assembly.GetExecutingAssembly().Location);
 
             try
             {
                 updateBtn.Enabled = false;
-                lblUpdateInfo.Text = "Pobieranie aktualizacji...";
+                lblUpdateInfo.Text = "Pobieranie...";
 
-                // 1. Pobierz now¹ wersjê
+                // Pobierz
                 using (HttpClient client = new HttpClient())
                 {
                     var data = await client.GetByteArrayAsync(url);
@@ -109,73 +102,40 @@ namespace testowanie
 
                 lblUpdateInfo.Text = "Rozpakowywanie...";
 
-                // 2. Rozpakuj do folderu tymczasowego
+                // Rozpakuj
                 if (Directory.Exists(extractPath))
                     Directory.Delete(extractPath, true);
 
                 ZipFile.ExtractToDirectory(tempZipPath, extractPath);
 
-                // 3. SprawdŸ czy s¹ pliki do aktualizacji
-                var newFiles = Directory.GetFiles(extractPath, "*", SearchOption.AllDirectories);
-                if (newFiles.Length == 0)
+                // ZnajdŸ nowy exe
+                var exeFiles = Directory.GetFiles(extractPath, "*.exe", SearchOption.AllDirectories);
+                if (exeFiles.Length == 0)
                 {
-                    MessageBox.Show("Brak plików w paczce aktualizacji.");
+                    MessageBox.Show("Brak pliku exe w aktualizacji.");
                     return;
                 }
 
-                lblUpdateInfo.Text = "Przygotowywanie aktualizacji...";
+                string newExePath = exeFiles[0];
+                string newExeName = Path.GetFileName(newExePath);
+                string targetExePath = Path.Combine(currentDir, newExeName);
 
-                // 4. Stwórz batch file który wykona aktualizacjê po zamkniêciu aplikacji
-                string batPath = Path.Combine(Path.GetTempPath(), "update.bat");
-                string batContent = $@"
-                                        @echo off
-                                        chcp 65001 > nul
-                                        echo Czekam na zamkniêcie aplikacji...
-                                        timeout /t 2 /nobreak > nul
+                lblUpdateInfo.Text = "Uruchamianie nowej wersji...";
 
-                                        echo Kopiowanie nowych plików...
-                                        xcopy /y /s ""{extractPath}"" ""{currentDir}""
+                // Uruchom now¹ wersjê (bez zastêpowania plików)
+                Process.Start(newExePath);
 
-                                        echo Uruchamianie nowej wersji...
-                                        cd /d ""{currentDir}""
-                                        start """" ""{currentExe}""
+                MessageBox.Show("Nowa wersja zosta³a uruchomiona. Mo¿esz zamkn¹æ star¹ wersjê.");
 
-                                        echo Usuwanie plików tymczasowych...
-                                        rd /s /q ""{extractPath}""
-                                        del ""{tempZipPath}""
-                                        del ""%~f0""
-
-                                        exit
-                                        ";
-
-                await File.WriteAllTextAsync(batPath, batContent, Encoding.GetEncoding(852));
-
-                // 5. Uruchom batch file
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName = "cmd.exe",
-                    Arguments = $"/C \"{batPath}\"",
-                    WindowStyle = ProcessWindowStyle.Hidden,
-                    CreateNoWindow = true
-                });
-
-                // 6. Zamknij aplikacjê
-                Application.Exit();
+                // Opcjonalnie: zamknij star¹ wersjê
+                // Application.Exit();
 
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"B³¹d aktualizacji: {ex.Message}");
+                MessageBox.Show($"B³¹d: {ex.Message}");
                 updateBtn.Enabled = true;
-                lblUpdateInfo.Text = "B³¹d aktualizacji";
-
-                // Sprz¹tanie w przypadku b³êdu
-                try
-                {
-                    if (File.Exists(tempZipPath)) File.Delete(tempZipPath);
-                    if (Directory.Exists(extractPath)) Directory.Delete(extractPath, true);
-                }
-                catch { }
+                lblUpdateInfo.Text = "B³¹d";
             }
         }
     }
