@@ -52,7 +52,7 @@ namespace testowanie
         {
             using (HttpClient httpClient = new HttpClient())
             {
-                var url = "https://majestic-axolotl-224ec3.netlify.app/version.txt";
+                var url = "https://danielkaplanski.github.io/Test-Aktualizacji-ML/version.txt";
 
                 var response = await httpClient.GetAsync(url);
                 var stream = await response.Content.ReadAsStreamAsync();
@@ -71,7 +71,7 @@ namespace testowanie
         // (Opcjonalnie) Obs³uga przycisku aktualizacji
         private async void updateBtn_Click(object sender, EventArgs e)
         {
-            string url = "https://majestic-axolotl-224ec3.netlify.app/publish.zip"; // link do zipa
+            string url = "https://danielkaplanski.github.io/Test-Aktualizacji-ML/publish.zip"; // link do zipa
             string tempZipPath = Path.Combine(Path.GetTempPath(), "update.zip");
             string extractPath = Path.Combine(Path.GetTempPath(), "update");
 
