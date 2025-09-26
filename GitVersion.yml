@@ -7,6 +7,32 @@ branches:
     regex: ^main$
     tag: ''
     source-branches: ['feature', 'fix', 'hotfix', 'support']
+
+  feature:
+    increment: Minor
+    regex: ^features?[/-]
+    source-branches: ['main']
+    tag: useBranchName
+
+  fix:
+    increment: Patch
+    regex: ^fix(es)?[/-]
+    source-branches: ['main']
+    tag: useBranchName
+
+  hotfix:
+    increment: Patch
+    regex: ^hotfix(es)?[/-]
+    source-branches: ['main']
+    tag: useBranchName
+
+  support:
+    increment: Patch
+    regex: ^support[/-]
+    source-branches: ['main']
+    tag: useBranchName
+
 ignore:
   sha: []
+
 commit-message-incrementing: Enabled
