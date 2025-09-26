@@ -45,7 +45,6 @@ namespace testowanie
                 lblUpdateInfo.Text = $"B³¹d sprawdzania wersji: {ex.Message}";
             }
         }
-        //
         // 4. Pobierz wersjê z pliku version.txt z Netlify
         private async Task<string> GetRemoteVersionAsync()
         {
