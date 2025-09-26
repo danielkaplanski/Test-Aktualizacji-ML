@@ -69,7 +69,7 @@ namespace testowanie
         // (Opcjonalnie) Obs³uga przycisku aktualizacji
         private void updateBtn_Click(object sender, EventArgs e)
         {
-            MessageBox.Show("Tu mo¿esz uruchomiæ aktualizator, pobraæ instalator, itd.");
+            MessageBox.Show("Tu mo¿esz uruchomiæ aktualizator, pobraæ instalator, itd. lub sprawdzic tez wersje");
             // Np. Process.Start("https://link-do-instalki.exe");
         }
     }
