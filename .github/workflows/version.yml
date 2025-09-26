@@ -22,6 +22,12 @@ jobs:
       - name: Install GitVersion
         run: dotnet tool install --global GitVersion.Tool
 
+      - name: Check if GitVersion is installed
+        run: |
+          export PATH="$PATH:$HOME/.dotnet/tools"
+          which gitversion
+          gitversion --version
+
       - name: Generate version.txt
         run: |
           export PATH="$PATH:$HOME/.dotnet/tools"
