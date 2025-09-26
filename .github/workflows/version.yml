@@ -1,0 +1,26 @@
+name: Generate Version File
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Install GitVersion
+        run: dotnet tool install --global GitVersion.Tool
+
+      - name: Generate version.txt
+        run: |
+          export PATH="$PATH:$HOME/.dotnet/tools"
+          echo -n "$(gitversion /showvariable SemVer)" > version.txt
+      
+      - name: Upload version.txt as artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: version.txt
+          path: version.txt
