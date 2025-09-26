@@ -25,8 +25,15 @@ namespace testowanie
             // Sprawdü czy to restart po aktualizacji
             CheckForUpdateRestart();
 
-            var version = FileVersionInfo.GetVersionInfo(Assembly.GetExecutingAssembly().Location).ProductVersion;
-            lblCurrentVersion.Text = $"Wersja: {version}";
+            var fullVersion = Assembly.GetExecutingAssembly()
+                                      .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
+                                      .InformationalVersion
+                                      ?? "Brak wersji";
+
+            // Usuwamy wszystko po plusie (metadata)
+            var cleanVersion = fullVersion.Split('+')[0];
+
+            lblCurrentVersion.Text = $"Wersja: {cleanVersion}";
 
             try
             {
