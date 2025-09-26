@@ -21,9 +21,16 @@ jobs:
 
       - name: Restore dependencies
         run: dotnet restore
+      - name: Setup GitVersion
+        uses: gittools/actions/gitversion/setup@v0.10.0
+
+      - name: Execute GitVersion
+        uses: gittools/actions/gitversion/execute@v0.10.0
+        id: gitversion
 
       - name: Build project
         run: dotnet build --configuration Release /p:Version=${{ steps.gitversion.outputs.semVer }}
+
       - name: Publish project
         run: dotnet publish -c Release -o publish /p:Version=${{ steps.gitversion.outputs.semVer }}
 
