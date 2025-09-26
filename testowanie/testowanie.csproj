@@ -6,9 +6,6 @@
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
-	  <Version>1.0.4</Version>
-	  <FileVersion>1.0.4</FileVersion>
-	  <InformationalVersion>1.0.4</InformationalVersion>
 
   </PropertyGroup>
 
