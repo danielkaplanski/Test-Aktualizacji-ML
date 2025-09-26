@@ -14,16 +14,18 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
 
-      # ✅ Automatycznie instaluje i uruchamia GitVersion
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '8.0.x'
+
       - name: Run GitVersion
         uses: GitTools/actions/gitversion/execute@v0.11.0
         id: gitversion
 
-      # ✅ Zapisuje SemVer do pliku
       - name: Save version to version.txt
         run: echo "${{ steps.gitversion.outputs.semver }}" > version.txt
 
-      # ✅ Commit + push jeśli plik się zmienił
       - name: Commit and push version.txt if changed
         run: |
           git config user.name "github-actions[bot]"
@@ -36,9 +38,9 @@ jobs:
             echo "No changes in version.txt"
           fi
 
-      # ✅ Upload version.txt jako artefakt
       - name: Upload version.txt as artifact
         uses: actions/upload-artifact@v4
         with:
           name: version.txt
           path: version.txt
+`
