@@ -20,7 +20,8 @@ jobs:
           echo -n "$(gitversion /showvariable SemVer)" > version.txt
       
       - name: Upload version.txt as artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: version.txt
           path: version.txt
+
