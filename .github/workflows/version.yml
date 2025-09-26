@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  build:
+  generate-version:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -14,10 +14,31 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
 
+      # ✅ Automatycznie instaluje i uruchamia GitVersion
       - name: Run GitVersion
         uses: GitTools/actions/gitversion/execute@v0.11.0
         id: gitversion
 
-      - name: Save SemVer to version.txt
+      # ✅ Zapisuje SemVer do pliku
+      - name: Save version to version.txt
         run: echo "${{ steps.gitversion.outputs.semver }}" > version.txt
 
+      # ✅ Commit + push jeśli plik się zmienił
+      - name: Commit and push version.txt if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add version.txt
+          if ! git diff --cached --quiet; then
+            git commit -m "Update version.txt [skip ci]"
+            git push
+          else
+            echo "No changes in version.txt"
+          fi
+
+      # ✅ Upload version.txt jako artefakt
+      - name: Upload version.txt as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: version.txt
+          path: version.txt
