@@ -19,32 +19,31 @@ namespace testowanie
 
         private async void Form1_Load(object sender, EventArgs e)
         {
-            // 1. Pobierz lokaln¹ wersjê aplikacji
-            currentVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "Brak wersji";
-            lblCurrentVersion.Text = $"Wersja: {currentVersion}";
+            string localVersion = Application.ProductVersion;
+            lblCurrentVersion.Text = $"Twoja wersja: {localVersion}";
 
-            // 2. Pobierz zdaln¹ wersjê
-            try
+            string remoteVersion = await GetLatestVersionAsync();
+
+            if (remoteVersion != null)
             {
-                remoteVersion = await GetRemoteVersionAsync();
-                lblUpdateInfo.Text = $"Nowa wersja: {remoteVersion}";
+                lblUpdateInfo.Text = $"Dostêpna wersja: {remoteVersion}";
 
-                // 3. Porównaj wersje
-                if (remoteVersion != currentVersion)
+                if (IsNewerVersion(remoteVersion, localVersion))
                 {
-                    lblUpdateInfo.Text += " (Dostêpna nowa wersja!)";
-                    updateBtn.Enabled = true; // np. w³¹cz przycisk aktualizacji
+                    updateBtn.Visible = true;
                 }
                 else
                 {
-                    lblUpdateInfo.Text += " (Aktualna)";
+                    updateBtn.Visible = false;
                 }
             }
-            catch (Exception ex)
+            else
             {
-                lblUpdateInfo.Text = $"B³¹d sprawdzania wersji: {ex.Message}";
+                lblUpdateInfo.Text = "Nie uda³o siê sprawdziæ wersji.";
+                updateBtn.Visible = false;
             }
         }
+
         //
         // 4. Pobierz wersjê z pliku version.txt z Netlify
         private async Task<string> GetRemoteVersionAsync()
@@ -63,6 +62,35 @@ namespace testowanie
                     // Usuñ niewidoczne znaki BOM + koñcówki linii
                     return version.Trim().Trim('\uFEFF');
                 }
+            }
+        }
+        private async Task<string> GetLatestVersionAsync()
+        {
+            using (HttpClient client = new HttpClient())
+            {
+                try
+                {
+                    var bytes = await client.GetByteArrayAsync("https://gilded-sorbet-913b659.netlify.app/version.txt");
+                    string version = Encoding.UTF8.GetString(bytes).TrimStart('\uFEFF').Trim();
+                    return version;
+                }
+                catch
+                {
+                    return null;
+                }
+            }
+        }
+        private bool IsNewerVersion(string remoteVersion, string localVersion)
+        {
+            try
+            {
+                Version remote = new Version(remoteVersion);
+                Version local = new Version(localVersion);
+                return remote > local;
+            }
+            catch
+            {
+                return false;
             }
         }
 
