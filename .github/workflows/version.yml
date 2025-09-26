@@ -18,9 +18,15 @@ jobs:
         uses: actions/setup-dotnet@v3
         with:
           dotnet-version: '8.0.x' # lub wersja, której potrzebujesz
-
+      - name: Diagnostyka .NET
+        run: |
+          dotnet --info
+          dotnet tool list --global
       - name: Install GitVersion
-        run: dotnet tool install --global GitVersion.Tool
+        run: |
+          dotnet tool install --global GitVersion.Tool || { echo "❌ Instalacja GitVersion się nie powiodła"; exit 1; }
+          echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
+
 
       - name: Check if GitVersion is installed
         run: |
