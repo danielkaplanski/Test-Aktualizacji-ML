@@ -7,7 +7,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-
+using System.Diagnostics;
 namespace testowanie
 {
     public partial class Form1 : Form
@@ -25,8 +25,8 @@ namespace testowanie
             // Sprawdü czy to restart po aktualizacji
             CheckForUpdateRestart();
 
-            currentVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "Brak wersji";
-            lblCurrentVersion.Text = $"Wersja: {currentVersion}";
+            var version = FileVersionInfo.GetVersionInfo(Assembly.GetExecutingAssembly().Location).ProductVersion;
+            lblCurrentVersion.Text = $"Wersja: {version}";
 
             try
             {
