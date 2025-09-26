@@ -128,25 +128,25 @@ namespace testowanie
                 // 4. Stwórz batch file który wykona aktualizacjê po zamkniêciu aplikacji
                 string batPath = Path.Combine(Path.GetTempPath(), "update.bat");
                 string batContent = $@"
-@echo off
-chcp 65001 > nul
-echo Czekam na zamkniêcie aplikacji...
-timeout /t 2 /nobreak > nul
+                                        @echo off
+                                        chcp 65001 > nul
+                                        echo Czekam na zamkniêcie aplikacji...
+                                        timeout /t 2 /nobreak > nul
 
-echo Kopiowanie nowych plików...
-xcopy /y /s ""{extractPath}"" ""{currentDir}""
+                                        echo Kopiowanie nowych plików...
+                                        xcopy /y /s ""{extractPath}"" ""{currentDir}""
 
-echo Uruchamianie nowej wersji...
-cd /d ""{currentDir}""
-start """" ""{currentExe}""
+                                        echo Uruchamianie nowej wersji...
+                                        cd /d ""{currentDir}""
+                                        start """" ""{currentExe}""
 
-echo Usuwanie plików tymczasowych...
-rd /s /q ""{extractPath}""
-del ""{tempZipPath}""
-del ""%~f0""
+                                        echo Usuwanie plików tymczasowych...
+                                        rd /s /q ""{extractPath}""
+                                        del ""{tempZipPath}""
+                                        del ""%~f0""
 
-exit
-";
+                                        exit
+                                        ";
 
                 await File.WriteAllTextAsync(batPath, batContent, Encoding.GetEncoding(852));
 
