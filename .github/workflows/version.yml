@@ -1,4 +1,4 @@
-name: Generate Version File
+name: Generate and Update version.txt
 
 on:
   push:
@@ -6,22 +6,23 @@ on:
       - main
 
 jobs:
-  build:
+  update-version:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v3
-      
-      - name: Install GitVersion
-        run: dotnet tool install --global GitVersion.Tool
+    - uses: actions/checkout@v3
 
-      - name: Generate version.txt
-        run: |
-          export PATH="$PATH:$HOME/.dotnet/tools"
-          echo -n "$(gitversion /showvariable SemVer)" > version.txt
-      
-      - name: Upload version.txt as artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: version.txt
-          path: version.txt
+    - name: Install GitVersion
+      run: dotnet tool install --global GitVersion.Tool
 
+    - name: Generate version.txt
+      run: |
+        export PATH="$PATH:$HOME/.dotnet/tools"
+        gitversion /showvariable SemVer > version.txt
+
+    - name: Commit and push version.txt if changed
+      run: |
+        git config user.name "github-actions"
+        git config user.email "actions@github.com"
+        git add version.txt
+        git diff --cached --quiet || (git commit -m "Update version.txt to $(cat version.txt)" && git push)

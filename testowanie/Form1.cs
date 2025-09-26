@@ -19,38 +19,39 @@ namespace testowanie
 
         private async void Form1_Load(object sender, EventArgs e)
         {
-            string localVersion = Application.ProductVersion;
-            lblCurrentVersion.Text = $"Twoja wersja: {localVersion}";
+            // 1. Pobierz lokaln¹ wersjê aplikacji
+            currentVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "Brak wersji";
+            lblCurrentVersion.Text = $"Wersja: {currentVersion}";
 
-            string remoteVersion = await GetLatestVersionAsync();
-
-            if (remoteVersion != null)
+            // 2. Pobierz zdaln¹ wersjê
+            try
             {
-                lblUpdateInfo.Text = $"Dostêpna wersja: {remoteVersion}";
+                remoteVersion = await GetRemoteVersionAsync();
+                lblUpdateInfo.Text = $"Nowa wersja: {remoteVersion}";
 
-                if (IsNewerVersion(remoteVersion, localVersion))
+                // 3. Porównaj wersje
+                if (remoteVersion != currentVersion)
                 {
-                    updateBtn.Visible = true;
+                    lblUpdateInfo.Text += " (Dostêpna nowa wersja!)";
+                    updateBtn.Enabled = true; // np. w³¹cz przycisk aktualizacji
                 }
                 else
                 {
-                    updateBtn.Visible = false;
+                    lblUpdateInfo.Text += " (Aktualna)";
                 }
             }
-            else
+            catch (Exception ex)
             {
-                lblUpdateInfo.Text = "Nie uda³o siê sprawdziæ wersji.";
-                updateBtn.Visible = false;
+                lblUpdateInfo.Text = $"B³¹d sprawdzania wersji: {ex.Message}";
             }
         }
-
         //
         // 4. Pobierz wersjê z pliku version.txt z Netlify
         private async Task<string> GetRemoteVersionAsync()
         {
             using (HttpClient httpClient = new HttpClient())
             {
-                var url = "https://gilded-sorbet-913b659.netlify.app/version.txt";
+                var url = "https://majestic-axolotl-224ec3.netlify.app/version.txt";
 
                 var response = await httpClient.GetAsync(url);
                 var stream = await response.Content.ReadAsStreamAsync();
@@ -64,35 +65,7 @@ namespace testowanie
                 }
             }
         }
-        private async Task<string> GetLatestVersionAsync()
-        {
-            using (HttpClient client = new HttpClient())
-            {
-                try
-                {
-                    var bytes = await client.GetByteArrayAsync("https://gilded-sorbet-913b659.netlify.app/version.txt");
-                    string version = Encoding.UTF8.GetString(bytes).TrimStart('\uFEFF').Trim();
-                    return version;
-                }
-                catch
-                {
-                    return null;
-                }
-            }
-        }
-        private bool IsNewerVersion(string remoteVersion, string localVersion)
-        {
-            try
-            {
-                Version remote = new Version(remoteVersion);
-                Version local = new Version(localVersion);
-                return remote > local;
-            }
-            catch
-            {
-                return false;
-            }
-        }
+
 
         // (Opcjonalnie) Obs³uga przycisku aktualizacji
         private void updateBtn_Click(object sender, EventArgs e)
