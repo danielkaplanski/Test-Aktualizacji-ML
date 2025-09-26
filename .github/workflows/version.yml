@@ -13,7 +13,12 @@ jobs:
         with:
           fetch-depth: 0
           fetch-tags: true
-      
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '8.0.x' # lub wersja, której potrzebujesz
+
       - name: Install GitVersion
         run: dotnet tool install --global GitVersion.Tool
 
@@ -21,7 +26,7 @@ jobs:
         run: |
           export PATH="$PATH:$HOME/.dotnet/tools"
           gitversion /showvariable SemVer > version.txt
-      
+
       - name: Commit and push version.txt if changed
         run: |
           git config user.name "github-actions[bot]"
@@ -33,7 +38,7 @@ jobs:
           else
             echo "No changes in version.txt"
           fi
-      
+
       - name: Upload version.txt as artifact
         uses: actions/upload-artifact@v4
         with:
