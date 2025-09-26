@@ -38,11 +38,11 @@ jobs:
 
       # Build z ustawioną wersją z GitVersion
       - name: Build project
-        run: dotnet build --configuration Release /p:Version=${{ steps.gitversion.outputs.semVer }}
+        run: dotnet build --configuration Release /p:Version=${{ steps.gitversion.outputs.semVer }} /p:FileVersion=${{ steps.gitversion.outputs.semVer }} /p:InformationalVersion=${{ steps.gitversion.outputs.semVer }}
 
       # Publish do folderu publish
       - name: Publish project
-        run: dotnet publish -c Release -o publish /p:Version=${{ steps.gitversion.outputs.semVer }}
+        run: dotnet publish -c Release -o publish /p:Version=${{ steps.gitversion.outputs.semVer }} /p:FileVersion=${{ steps.gitversion.outputs.semVer }} /p:InformationalVersion=${{ steps.gitversion.outputs.semVer }}
 
       # ZIP publikacji
       - name: Create ZIP
