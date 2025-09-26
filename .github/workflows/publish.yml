@@ -29,7 +29,7 @@ jobs:
         run: dotnet publish -c Release -o publish
 
       - name: Create ZIP
-        run: powershell Compress-Archive -Path publish\* -DestinationPath publish.zip -Force
+        run: powershell Compress-Archive -Path publish\* -DestinationPath $env:RUNNER_TEMP\publish.zip -Force
 
       - name: Checkout gh-pages
         uses: actions/checkout@v4
@@ -38,7 +38,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Copy publish.zip to gh-pages
-        run: copy ..\publish.zip publish.zip
+        run: copy $env:RUNNER_TEMP\publish.zip publish.zip
 
       - name: Commit and push publish.zip
         run: |
