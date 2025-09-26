@@ -14,50 +14,10 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
 
-      - name: Setup .NET SDK
-        uses: actions/setup-dotnet@v3
-        with:
-          dotnet-version: '8.0.x' # lub wersja, której potrzebujesz
-      - name: Diagnostyka .NET
-        run: |
-          dotnet --info
-          dotnet tool list --global
-      - name: Install GitVersion
-        run: |
-          dotnet --info
-          dotnet tool install --global GitVersion.Tool || { echo "❌ GitVersion install failed"; exit 1; }
-          echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
-          dotnet tool list --global
+      - name: Run GitVersion
+        uses: GitTools/actions/gitversion/execute@v0.11.0
+        id: gitversion
 
+      - name: Save SemVer to version.txt
+        run: echo "${{ steps.gitversion.outputs.semver }}" > version.txt
 
-      - name: Check if GitVersion is installed
-        run: |
-          export PATH="$PATH:$HOME/.dotnet/tools"
-          echo "PATH: $PATH"
-          echo "Checking gitversion location..."
-          which gitversion || echo "❌ gitversion not found"
-          echo "Checking gitversion version..."
-          gitversion --version || echo "❌ gitversion command failed"
-
-      - name: Generate version.txt
-        run: |
-          export PATH="$PATH:$HOME/.dotnet/tools"
-          gitversion /showvariable SemVer > version.txt
-
-      - name: Commit and push version.txt if changed
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add version.txt
-          if ! git diff --cached --quiet; then
-            git commit -m "Update version.txt [skip ci]"
-            git push
-          else
-            echo "No changes in version.txt"
-          fi
-
-      - name: Upload version.txt as artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: version.txt
-          path: version.txt
