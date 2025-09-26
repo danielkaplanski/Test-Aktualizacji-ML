@@ -1,4 +1,6 @@
 using System;
+using System.Diagnostics;
+using System.IO.Compression;
 using System.Net.Http;
 using System.Reflection;
 using System.Text;
@@ -67,10 +69,48 @@ namespace testowanie
 
 
         // (Opcjonalnie) Obs³uga przycisku aktualizacji
-        private void updateBtn_Click(object sender, EventArgs e)
+        private async void updateBtn_Click(object sender, EventArgs e)
         {
-            MessageBox.Show("Tu mo¿esz uruchomiæ aktualizator, pobraæ instalator.");
-            // Np. Process.Start("https://link-do-instalki.exe");
+            string url = "https://majestic-axolotl-224ec3.netlify.app/publish.zip"; // link do zipa
+            string tempZipPath = Path.Combine(Path.GetTempPath(), "update.zip");
+            string extractPath = Path.Combine(Path.GetTempPath(), "update");
+
+            try
+            {
+                using (HttpClient client = new HttpClient())
+                {
+                    var data = await client.GetByteArrayAsync(url);
+                    await File.WriteAllBytesAsync(tempZipPath, data);
+                }
+
+                // Usuñ folder z poprzedniej aktualizacji jeœli istnieje
+                if (Directory.Exists(extractPath))
+                    Directory.Delete(extractPath, true);
+
+                // Rozpakuj
+                ZipFile.ExtractToDirectory(tempZipPath, extractPath);
+                var files = Directory.GetFiles(extractPath, "*", SearchOption.AllDirectories);
+                string fileList = string.Join("\n", files);
+                MessageBox.Show("Zawartoœæ rozpakowanego folderu:\n" + fileList);
+
+                var exeFiles = Directory.GetFiles(extractPath, "*.exe", SearchOption.AllDirectories);
+                if (exeFiles.Length == 0)
+                {
+                    MessageBox.Show("Nie znaleziono pliku .exe w paczce aktualizacji.");
+                    return;
+                }
+                string newExePath = exeFiles[0];
+
+                // Uruchom now¹ wersjê
+                Process.Start(newExePath);
+                Application.Exit();
+
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("B³¹d aktualizacji: " + ex.Message);
+            }
         }
+
     }
 }
