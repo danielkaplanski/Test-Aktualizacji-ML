@@ -26,7 +26,11 @@ namespace testowanie
             CheckForUpdateRestart();
 
             var version = FileVersionInfo.GetVersionInfo(Assembly.GetExecutingAssembly().Location).ProductVersion;
-            lblCurrentVersion.Text = $"Wersja: {version}";
+
+            // Podziel wersjê na czêœci u¿ywaj¹c '+' jako separatora i weŸ tylko pierwsz¹ czêœæ
+            string displayVersion = version.Split('+')[0];
+
+            lblCurrentVersion.Text = $"Wersja: {displayVersion}";
 
             try
             {
